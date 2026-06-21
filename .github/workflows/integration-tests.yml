@@ -30,7 +30,7 @@ jobs:
 
       - name: Compile Vortex Router
         run: |
-          cargo update -p sfv --precise 0.10.4
+          cargo update -p sfv --precise 0.10.4 --package sfv
           cargo build --release
 
       - name: Spin up Test Environment
