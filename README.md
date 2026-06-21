@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <b>A high-performance, stateless L7 Edge Router for the Vortex PaaS.</b><br/>
+  <b>A high-performance, stateless L7 Edge Router for the Vortex Engine.</b><br/>
   Built with Rust, Cloudflare's Pingora, and Tokio — fully event-driven via Kind DB.
 </p>
 
@@ -122,19 +122,21 @@ Vortex-proxy uses environment variables for configuration to ensure 12-factor ap
 
 To see the proxy route traffic, we need to create a local mini-cluster.
 
-## recommended  way (Pre-requisite: The system should have perl installed in it) 
+### Recommended Way (Automated)
+*Pre-requisite: The system should have Perl installed.*
+
 **1. Make the script executable**
-Before running the automated cluster setup, you must give the file permission to execute on your machine
-'''bash
+Before running the automated cluster setup, you must give the file permission to execute on your machine.
+```bash
 chmod +x setup_cluster.pl 
-'''
+```
 
 **2. Run the script**
-'''bash
+```bash
 ./setup_cluster.pl 
-'''
+```
 
-## Alternate way
+### Alternate Way (Manual)
 **1. Create a dedicated Docker network**
 ```bash
 docker network create vortex-net
@@ -224,6 +226,20 @@ docker run -d \
 
 ---
 
+## CI/CD & End-to-End Testing
+
+This project utilizes GitHub Actions to ensure strict quality control and functional correctness on every commit and pull request. 
+
+The primary workflow (`integration-tests.yml`) executes the following:
+1. **Code Quality:** Enforces formatting standards (`cargo fmt`) and pedantic linting rules (`cargo clippy`).
+2. **Release Compilation:** Builds the proxy and its dependencies from scratch.
+3. **Ephemeral Test Environment:** Automatically provisions a local Docker network, spins up Kind DB, and starts two Nginx backend containers.
+4. **Live gRPC Injection:** Uses `grpcurl` to push base64 routing payloads directly to the test DB.
+5. **E2E Routing Verification:** Boots the proxy locally, fires HTTP requests at it, and strictly asserts an HTTP 200 response to guarantee that dynamic routing over gRPC is functioning properly.
+6. **Log Archival:** Uploads the proxy's `stdout` and `stderr` logs as GitHub Artifacts upon completion for trace debugging.
+
+---
+
 ## Project Structure
 
 ```text
@@ -236,6 +252,7 @@ vortex-proxy/
 │   └── kind.proto               # Kind DB gRPC Service Definitions
 │
 ├── Dockerfile                   # Multi-stage optimized Rust build
+├── setup_cluster.pl             # Perl automation script for local environments
 ├── build.rs                     # tonic-build proto compiler script
 ├── Cargo.toml                   # Rust dependencies (Pingora, Tokio, Tonic, Serde)
 └── README.md                    # You are here
@@ -250,5 +267,5 @@ MIT
 ---
 
 <div align="center">
-  Built by <b>Nikhil</b> &nbsp;·&nbsp; Powered by <a href="https://github.com/cloudflare/pingora"><b>Pingora</b></a> &nbsp;·&nbsp; Component of <a href="https://github.com/NKS01X/Vortex"><b>Vortex</b></a>
+  Built by <b>Nikhil</b> &nbsp;·&nbsp; Powered by <a href="https://github.com/cloudflare/pingora"><b>Pingora</b></a> &nbsp;·&nbsp; Component of <a href="https://github.com/NKS01X/Vortex"><b>Vortex</b></a> &nbsp;·&nbsp; Utilises of <a href="https://github.com/NKS01X/kind-db"><b>Kind-db</b></a>
 </div>
