@@ -28,6 +28,7 @@ pub struct VortexRouter {
 impl ProxyHttp for VortexRouter {
     type CTX = ();
 
+    #[allow(clippy::unused_unit)]
     fn new_ctx(&self) -> () {
         ()
     }

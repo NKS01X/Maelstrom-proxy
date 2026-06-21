@@ -1,4 +1,4 @@
-name: Vortex Integration Tests
+name: Vortex Integration Testname: Vortex Intname: Vortex Integration Tests
 
 on:
   push:
@@ -37,15 +37,9 @@ jobs:
         run: |
           docker network create vortex-net
           docker run -d --name kind-db --network vortex-net -p 50051:50051 nks01x/kind-db:latest
-          docker run -d --name backend-1 --network vortex-net nginxdemos/hello:plain-text
-          docker run -d --name backend-2 --network vortex-net nginxdemos/hello:plain-text
+          docker run -d --name backend-1 -p 8081:80 --network vortex-net nginxdemos/hello:plain-text
+          docker run -d --name backend-2 -p 8082:80 --network vortex-net nginxdemos/hello:plain-text
           sleep 3
-
-      - name: Inject Test Route into Kind DB
-        run: |
-          grpcurl -plaintext -import-path ./proto -proto kind.proto \
-            -d '{"key": "router:testapp", "value": "eyJjbGllbnRfaWQiOiAidGVzdGFwcCIsICJpcHMiOiBbImJhY2tlbmQtMTo4MCIsICJiYWNrZW5kLTI6ODAiXX0="}' \
-            localhost:50051 kind.KindService/Put
 
       - name: Start Vortex Router
         env:
@@ -53,19 +47,20 @@ jobs:
         run: |
           nohup ./target/release/vortex-router > router.log 2>&1 &
           sleep 5
+          
       - name: Inject Test Route into Kind DB
         run: |
           grpcurl -plaintext -import-path ./proto -proto kind.proto \
-            -d '{"key": "router:testapp", "value": "eyJjbGllbnRfaWQiOiAidGVzdGFwcCIsICJpcHMiOiBbImJhY2tlbmQtMTo4MCIsICJiYWNrZW5kLTI6ODAiXX0="}' \
+            -d '{"key": "router:testapp", "value": "eyJjbGllbnRfaWQiOiAidGVzdGFwcCIsICJpcHMiOiBbIjEyNy4wLjAuMTo4MDgxIiwgIjEyNy4wLjAuMTo4MDgyIl19"}' \
             localhost:50051 kind.KindService/Put
           sleep 5
 
       - name: Verify Live Routing
         run: |
           echo "Sending test request to proxy..."
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: testapp.vortex.cloud" http://localhost:8000)
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: testapp.vortex.cloud" http://localhost:8000 || true)
           
-          if [ "$HTTP_STATUS" -eq 200 ]; then
+          if [ "$HTTP_STATUS" = "200" ]; then
             echo "Integration Test Passed! Proxy successfully routed traffic."
             curl -s -H "Host: testapp.vortex.cloud" http://localhost:8000
             exit 0
