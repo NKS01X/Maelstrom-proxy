@@ -52,7 +52,13 @@ jobs:
           KIND_DB_URL: http://localhost:50051
         run: |
           nohup ./target/release/vortex-router > router.log 2>&1 &
-          sleep 3
+          sleep 5
+      - name: Inject Test Route into Kind DB
+        run: |
+          grpcurl -plaintext -import-path ./proto -proto kind.proto \
+            -d '{"key": "router:testapp", "value": "eyJjbGllbnRfaWQiOiAidGVzdGFwcCIsICJpcHMiOiBbImJhY2tlbmQtMTo4MCIsICJiYWNrZW5kLTI6ODAiXX0="}' \
+            localhost:50051 kind.KindService/Put
+          sleep 5
 
       - name: Verify Live Routing
         run: |
